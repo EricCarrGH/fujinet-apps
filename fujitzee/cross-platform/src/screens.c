@@ -2,7 +2,6 @@
 #include <cmoc.h>
 #else
 #include <stdlib.h>
-#include <conio.h>
 #endif /* _CMOC_VERSION_ */
 #include "stateclient.h"
 #include "screens.h"
@@ -104,7 +103,7 @@ void showPlayerNameScreen() {
   //i=strlen(playerName);
   
   clearCommonInput();
-  //while (inputKey != KEY_RETURN || i<2) {
+  //while (input.key != KEY_RETURN || i<2) {
   while (!inputFieldCycle(16, 17, PLAYER_NAME_MAX, playerName)) ;
   
   
@@ -141,7 +140,7 @@ void showWelcomeScreen() {
   strcat(tempBuffer, playerName);
   centerText(13,tempBuffer);  
   
-  //pause(45);
+  pause(45);
 
   // If first run, show the help screen
   if (prefs[PREF_HELP]!=2) {
@@ -149,13 +148,13 @@ void showWelcomeScreen() {
     savePrefs();
     showHelpScreen();
   } 
-  //pause(30);
+  pause(30);
 } 
 
 /// @brief Action in Table Selection Screen, joins the selected server
 void tableActionJoinServer() {
   // Reset the game state
-  clearGameState();
+  clearRenderState();
   
   strcat(query, "&player=");
   strcat(query, playerName);
@@ -170,32 +169,31 @@ void tableActionJoinServer() {
 
 /// @brief Shows a screen to select a table to join
 void showTableSelectionScreen() {
-  static uint8_t shownChip;
-  static unsigned char tableIndex=0;
+  static uint8_t shownChip, tableIndex, waitTime;
+  tableIndex=waitTime=0;
   
   // An empty query means a table needs to be selected
   while (strlen(query)==0) {
 
     // Show the status immediately before retrival
-    centerStatusText("refreshing game list..");
-    //drawStatusTimer();
-    
-
     resetScreenWithBorder();
-      
+    centerStatusText("refreshing game list..");
     centerText(3, "choose a game to join");
     drawText(6,6, "game");
     drawText(WIDTH-13,6, "players");
     drawLine(6,7,WIDTH-12);
-
     
     waitvsync();
+    pause(waitTime);
   
     if (apiCall("tables", false)) {
-   
+
+      // Add an artifical wait time if refreshing
+      waitTime=20;
+      
       updateState(true);
-      if (tableCount>0) {
-        for(i=0;i<tableCount;++i) {
+      if (state.tableCount>0) {
+        for(i=0;i<state.tableCount;++i) {
           drawTextAlt(6,8+i*2, state.tables[i].name);
           drawTextAlt(WIDTH-6-strlen(state.tables[i].players), 8+i*2, state.tables[i].players);
           if (state.tables[i].players[0]>'0') {
@@ -212,35 +210,36 @@ void showTableSelectionScreen() {
       shownChip=0;
 
       clearCommonInput();
-      while (!inputTrigger || !tableCount) {
+      while (!input.trigger || !state.tableCount) {
+        waitvsync();
         readCommonInput();
        
-        if (inputKey == 'h' || inputKey == 'H') {
+        if (input.key == 'h' || input.key == 'H') {
           showHelpScreen();
           break;
-        } else if (inputKey == 'r' || inputKey =='R') {
+        } else if (input.key == 'r' || input.key =='R') {
           break;
-        } else if (inputKey == 'c' || inputKey =='C') {
+        } else if (input.key == 'c' || input.key =='C') {
           prefs[PREF_COLOR] = cycleNextColor()+1;
           savePrefs();
           break;
-         } else if (inputKey == 'n' || inputKey =='N') {
+         } else if (input.key == 'n' || input.key =='N') {
           showPlayerNameScreen();
           break;
-        } else if (inputKey == 'q' || inputKey =='Q') {
+        } else if (input.key == 'q' || input.key =='Q') {
           quit();
-        } /*else if (inputKey != 0) {
-          itoa(inputKey, tempBuffer, 10);
+        } /*else if (input.key != 0) {
+          itoa(input.key, tempBuffer, 10);
           drawStatusText(tempBuffer);
         }*/
         
-        if (!shownChip || (tableCount>0 && inputDirY)) {
+        if (!shownChip || (state.tableCount>0 && input.dirY)) {
 
           drawBlank(4,8+tableIndex*2);
-          tableIndex+=inputDirY;
+          tableIndex+=input.dirY;
           if (tableIndex==255) 
-            tableIndex=tableCount-1;
-          else if (tableIndex>=tableCount)
+            tableIndex=state.tableCount-1;
+          else if (tableIndex>=state.tableCount)
             tableIndex=0;
 
           drawChip(4,8+tableIndex*2);
@@ -250,14 +249,11 @@ void showTableSelectionScreen() {
         }
       }
       
-      
-      
-      if (inputTrigger) {
+      if (input.trigger) {
         soundCursor();
 
         // Clear screen and write server name
         resetScreenWithBorder();
-        //clearStatusBar();
         centerText(15, state.tables[tableIndex].name);
         
         strcpy(query, "?table=");
@@ -301,7 +297,7 @@ void showInGameMenuScreen() {
     i=1;
     while (i==1) {
       readCommonInput();
-      switch (inputKey) {
+      switch (input.key) {
         case 'c':
         case 'C':
             prefs[PREF_COLOR] = cycleNextColor()+1;
@@ -337,7 +333,7 @@ void showInGameMenuScreen() {
   }
 
   // Show game screen again before returning
-  forceRender();
+  clearRenderState();
   renderBoardNamesMessages();
 }
 

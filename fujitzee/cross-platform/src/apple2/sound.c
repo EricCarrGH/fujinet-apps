@@ -27,12 +27,12 @@ void tone(uint16_t period, uint8_t dur, uint8_t wait) {
 // Keeping this here in case I need it
 // void toneFinder() {
 //   clearCommonInput();
-//   while (inputKey != KEY_RETURN || i<2) {
+//   while (input.key != KEY_RETURN || i<2) {
 //     while (!kbhit());
-//     inputKey = cgetc();
-//     if (inputKey == KEY_DOWN_ARROW)
+//     input.key = cgetc();
+//     if (input.key == KEY_DOWN_ARROW)
 //       i-=1;
-//     if (inputKey == KEY_UP_ARROW)
+//     if (input.key == KEY_UP_ARROW)
 //       i+=1;
 //       cprintf("%i ",i);
 //     tone(i,50,0,0);

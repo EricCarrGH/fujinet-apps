@@ -30,30 +30,25 @@ typedef unsigned char bool;
 #include "fujinet-fuji.h"
 
 // Store default server endpoint in case lobby did not set app key
-//char serverEndpoint[50] = "N:https://5card.carr-designs.com/";
-char serverEndpoint[50] = "N:http://127.0.0.1:8080/";
+char serverEndpoint[50] = "N:https://fujitzee.carr-designs.com/";
+//char serverEndpoint[50] = "N:http://127.0.0.1:8080/";
 //char serverEndpoint[64] = "N:http://api.open-notify.org/iss-now.json";
 
 char query[50] = ""; //?table=blue&player=ERICAPL2";
-
 char playerName[12] = "";
 
 GameState state;
 
 // State helper vars
-unsigned char playerCount, prevPlayerCount, validMoveCount, prevRound, tableCount, cursorX, waitCount, inputKey, wasViewing, skipApiCall;
-
-signed char inputDirX, inputDirY;
 uint16_t rx_len, maxJifs;
-bool noAnim, doAnim, inputTrigger, forceReadyUpdates, promptChanged;
+bool forceReadyUpdates;
 
-
+// 17880
 
 // Common local scope temp variables
-unsigned char h, i, j, k, x, y, xx;
+unsigned char h, i, j, k, x, y;
 char tempBuffer[128];
 char prefs[4];
-char *hand, *requestedMove;
 
 #ifdef _CMOC_VERSION_
 int main(void)
@@ -71,11 +66,12 @@ void main(void)
   showTableSelectionScreen();
   
   // Main event loop - process state from server and input from keyboard/joystick
-  skipApiCall=0;
+  state.apiCallWait=0;
+
   while (true) {
     
     // Poll the server every so often.
-    if (!skipApiCall--) {
+    if (!state.apiCallWait--) {
       // Poll the server
       switch (getStateFromServer()) {
         case STATE_UPDATE_ERROR:
@@ -83,11 +79,11 @@ void main(void)
           failedApiCalls++;
 
           // Exponential (wait an additional second each consequtive error)
-          skipApiCall=60*failedApiCalls;
+          state.apiCallWait=60*failedApiCalls;
 
           // Don't wait more than 5 seconds
-          if (skipApiCall>300)
-            skipApiCall = 300;
+          if (state.apiCallWait>300)
+            state.apiCallWait = 300;
 
           // After a few failures, let the player know we are experiencing technical difficulties
           if (failedApiCalls>3) {
@@ -97,14 +93,14 @@ void main(void)
         
         case STATE_UPDATE_NOCHANGE:
           // Wait a few frames before checking for more data
-          skipApiCall = 5;
+          state.apiCallWait = 5;
           break;
 
         case STATE_UPDATE_CHANGE:
           processStateChange();
           
           // Poll again in a bit
-          skipApiCall = 59;
+          state.apiCallWait = 59;
           break;
       }
     }

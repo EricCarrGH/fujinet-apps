@@ -11,7 +11,6 @@
 #include <joystick.h>
 #include <stdio.h>
 #include <string.h>
-#include <conio.h>
 #endif /* __ADAM__ */
 #endif /* _CMOC_VERSION_ */
 #include "platform-specific/graphics.h"
@@ -23,6 +22,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+InputStruct input;
 unsigned char _lastJoy, _joy, _joySameCount=10;
 bool _buttonReleased=true;
 
@@ -34,13 +34,13 @@ void pause(unsigned char frames) {
 }
 
 void clearCommonInput() {
-  inputTrigger=inputKey=inputDirY=inputDirX=_lastJoy=_joy=_buttonReleased=0;
+  input.trigger=input.key=input.dirY=input.dirX=_lastJoy=_joy=_buttonReleased=0;
   while (kbhit()) 
     cgetc();
 }
 
 void readCommonInput() {
-  inputTrigger=inputKey=inputDirX=inputDirY=0;
+  input.trigger=input.key=input.dirX=input.dirY=0;
 
   _joy = readJoystick();
 
@@ -51,19 +51,19 @@ void readCommonInput() {
     _lastJoy=_joy;
 
     if (JOY_LEFT(_joy))
-      inputDirX = -1;
+      input.dirX = -1;
     else if (JOY_RIGHT(_joy)) 
-      inputDirX =1;
+      input.dirX =1;
     
     if (JOY_UP(_joy))
-      inputDirY = -1;
+      input.dirY = -1;
     else if (JOY_DOWN(_joy))
-      inputDirY = 1;
+      input.dirY = 1;
 
     // Trigger button press only if it was previously unpressed
     if (JOY_BTN_1(_joy)) {
       if (_buttonReleased) {
-        inputTrigger=true;
+        input.trigger=true;
         _buttonReleased=false;
       }
     } else {
@@ -78,36 +78,36 @@ void readCommonInput() {
     }
   }
 
-  inputKey=0;
+  input.key=0;
 
   if (!kbhit())
     return;
     
-  inputKey = cgetc();
+  input.key = cgetc();
 
-  switch (inputKey) {
+  switch (input.key) {
     case KEY_LEFT_ARROW:
     case KEY_LEFT_ARROW_2:
     case KEY_LEFT_ARROW_3:
-      inputDirX=-1;
+      input.dirX=-1;
       break;
     case KEY_RIGHT_ARROW:
     case KEY_RIGHT_ARROW_2:
     case KEY_RIGHT_ARROW_3:
-      inputDirX=1;
+      input.dirX=1;
       break;
     case KEY_UP_ARROW:
     case KEY_UP_ARROW_2:
     case KEY_UP_ARROW_3:
-      inputDirY=-1;
+      input.dirY=-1;
       break;
     case KEY_DOWN_ARROW:
     case KEY_DOWN_ARROW_2:
     case KEY_DOWN_ARROW_3:
-      inputDirY=1;
+      input.dirY=1;
       break;
     case KEY_SPACEBAR:
-      inputTrigger=true;
+      input.trigger=true;
       break;
   }
 }

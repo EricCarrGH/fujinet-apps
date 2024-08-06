@@ -13,7 +13,7 @@
 uint8_t chat[20]="";
 uint8_t scoreY[] = {1,2,3,4,5,6,8,9,11,12,13,14,15,16,17,19};
 char* scores[]={"one","two","three","four","five","six","total","bonus","set 3","set 4","house","s run","l run","count","","SCORE"};
-uint8_t prevCursorX, cursorXMin;
+uint8_t cursorPos, prevCursorPos;
 
 void progressAnim(unsigned char y) {
   for(i=0;i<3;++i) {
@@ -29,7 +29,7 @@ void processStateChange() {
 
   state.prevActivePlayer = state.activePlayer;
   state.prevRollsLeft = state.rollsLeft;
-  prevRound = state.round;
+  state.prevRound = state.round;
 }
 
 
@@ -37,7 +37,7 @@ void renderBoardNamesMessages() {
   static bool redraw;
   static uint8_t scoreCursorX, scoreCursorY;
 
-  redraw = state.round < prevRound;
+  redraw = state.round < state.prevRound;
   
   // Draw board if we haven't drawn it yet, or a new game
   if (redraw) {
@@ -50,35 +50,35 @@ void renderBoardNamesMessages() {
   }
 
   // Draw player names if the count changed
-  if (redraw || playerCount != prevPlayerCount) {
+  if (redraw || state.playerCount != state.prevPlayerCount) {
     for(i=0;i<6;i++) {
-      if (i<playerCount) {
+      if (i<state.playerCount) {
         // Player name list
         drawTextAlt(1,i+1,state.players[i].alias);
         drawText(2,i+1,&state.players[i].name[1]);
 
         // Player initials across top of screen
         drawTextAlt(18+i*4,0,state.players[i].alias);
-      } else if (i<prevPlayerCount) {
+      } else if (i<state.prevPlayerCount) {
         drawText(1,i+1,"        ");
       }
     }
 
-    prevPlayerCount=playerCount;
+    state.prevPlayerCount=state.playerCount;
   }
 
   // Round 0 (waiting to start) checks, or going into round 1
-  if (state.round ==0 || (state.round == 1 && prevRound==0)) {
+  if (state.round ==0 || (state.round == 1 && state.prevRound==0)) {
     // Display "waiting for players" prompt if changed in ready mode
-    if (state.round==0 && promptChanged) {
+    if (state.round==0 && state.promptChanged) {
         centerTextWide(HEIGHT-3,state.prompt);
-        promptChanged = false;
+        state.promptChanged = false;
     }
 
     // Show players that are ready to start
     if (forceReadyUpdates) {
       for(i=0;i<6;i++) {
-        if (i<playerCount && state.players[i].scores[0]==1) {
+        if (i<state.playerCount && state.players[i].scores[0]==1) {
           drawTextVert(18+i*4,2,"ready");
           drawChip(0,i+1);
         } else {
@@ -101,15 +101,15 @@ void renderBoardNamesMessages() {
     if (state.round == 99)
       drawSpace(0,HEIGHT-5,200);
 
-    // Remove score cursor if player was last to play
-    if (state.prevActivePlayer==0 && cursorX>=10)
-      drawBlank(17,scoreY[cursorX-10]);
+    // Remove score cursorPos if player was last to play
+    if (state.prevActivePlayer==0 && cursorPos>=10)
+      drawBlank(17,scoreY[cursorPos-10]);
 
     // Update scores on-screen - two pass - first highlights in green the new one
     h = 0;
     scoreCursorY=0;
     for (k=0;k<2;k++) {
-      for (i=0;i<playerCount;i++) {
+      for (i=0;i<state.playerCount;i++) {
         for (j=0;j<16;j++) {
           if (state.players[i].scores[j]>-1) {
             itoa(state.players[i].scores[j], tempBuffer, 10);
@@ -126,7 +126,7 @@ void renderBoardNamesMessages() {
           }
         }
         if (k==0 && state.round<99 && scoreCursorY>0 && h>0 && h<5) {
-          drawScoreCursor(scoreCursorX,scoreCursorY);
+          drawCursor(scoreCursorX,scoreCursorY);
           soundScore();
         }
       }
@@ -155,7 +155,7 @@ void renderBoardNamesMessages() {
       pause(state.moveTime*60);
       centerTextAlt(HEIGHT-1,"press TRIGGER/SPACE to continue");
       clearCommonInput();
-      while (!inputTrigger) {
+      while (!input.trigger) {
         readCommonInput();
         waitvsync();
       }
@@ -187,17 +187,17 @@ void handleAnimation() {
     state.rollFrames=31;
     if (isThisPlayer) {
       state.playerMadeMove=false;
-      prevCursorX=5;
-      cursorX=1;
+      prevCursorPos=5;
+      cursorPos=1;
 
-      // If no rolls are remaining, default the cursor on the highest score
+      // If no rolls are remaining, default the cursorPos on the highest score
       if (state.rollsLeft==0) {
         highScoreIndex = 0;
         for (j=1;j<15;j++) {
           if (state.validScores[j]>state.validScores[highScoreIndex])
             highScoreIndex = j;
         }
-        cursorX=10+highScoreIndex;
+        cursorPos=10+highScoreIndex;
       }
     }
   }
@@ -249,18 +249,16 @@ void handleAnimation() {
 void processInput() {
   readCommonInput();
 
-  //if (state.viewing || state.activePlayer != 0)
-     
   if (!state.viewing) {
     // Toggle readiness if waiting to start game
-    if (state.round == 0 && inputTrigger) {
+    if (state.round == 0 && input.trigger) {
       state.players[0].scores[0] = !state.players[0].scores[0];
       forceReadyUpdates=true;
       renderBoardNamesMessages();
       if (state.players[0].scores[0]) 
         soundScore();
       else
-        soundCursorScore();
+        soundScoreCursor();
 
       sendMove("ready");
       return;
@@ -274,7 +272,7 @@ void processInput() {
   }
 
 
-  switch(inputKey) {
+  switch(input.key) {
       case KEY_ESCAPE: // Esc
       case KEY_ESCAPE_ALT: // Esc Alt
         showInGameMenuScreen();  
@@ -298,6 +296,7 @@ void processInput() {
 void waitOnPlayerMove() {
   static int jifsPerSecond, seconds;
   static bool foundValidLocation;
+  static uint8_t waitCount;
   
   resetTimer();
 
@@ -310,36 +309,36 @@ void waitOnPlayerMove() {
   // Move selection loop
   while (state.moveTime>0) {
    
-      // Update horizontal cursor location - dice: 0 = roll, 1-5 equal select dice at that index
-      if (inputDirX !=0 && state.rollsLeft) {
-        // If cursor was selecting a score, bring it back down
-        if (cursorX>9)
-          cursorX = 1;
+      // Update horizontal cursorPos location - dice: 0 = roll, 1-5 equal select dice at that index
+      if (input.dirX !=0 && state.rollsLeft) {
+        // If cursorPos was selecting a score, bring it back down
+        if (cursorPos>9)
+          cursorPos = 1;
 
-        cursorX+=inputDirX;
+        cursorPos+=input.dirX;
 
         // Bounds check
-        if (cursorX<0 || cursorX>5)
-          cursorX = prevCursorX;
+        if (cursorPos<0 || cursorPos>5)
+          cursorPos = prevCursorPos;
       
-      // Update vertical cursor location - scores: 10-24 represent the possible scoring locations
-      } else if (inputDirY != 0) {
-        // If cursor was selecting dice, bring it up
-        if (cursorX<10)
-          cursorX=25;
+      // Update vertical cursorPos location - scores: 10-24 represent the possible scoring locations
+      } else if (input.dirY != 0) {
+        // If cursorPos was selecting dice, bring it up
+        if (cursorPos<10)
+          cursorPos=25;
         
         while (1) {
-          cursorX+=inputDirY;
+          cursorPos+=input.dirY;
           
           // Bounds checks
           foundValidLocation=true;
-          if (cursorX<10 || (cursorX>24 && state.rollsLeft==0))
-            cursorX = prevCursorX;
-          else if (cursorX>24)
-            cursorX=prevCursorX <10 ? prevCursorX : 1;
+          if (cursorPos<10 || (cursorPos>24 && state.rollsLeft==0))
+            cursorPos = prevCursorPos;
+          else if (cursorPos>24)
+            cursorPos=prevCursorPos <10 ? prevCursorPos : 1;
           else {
             // Skip over invalid scores
-            if (state.validScores[cursorX-10]<0)
+            if (state.validScores[cursorPos-10]<0)
               foundValidLocation=false;
           }
 
@@ -351,41 +350,41 @@ void waitOnPlayerMove() {
      
     waitvsync();
 
-    // Draw cursor
-    if (cursorX != prevCursorX) {
+    // Draw cursorPos
+    if (cursorPos != prevCursorPos) {
       
-      // Hide cursor
-      if (prevCursorX < 6)
-        hideCursor(4*prevCursorX-(prevCursorX==0)+16, HEIGHT-4);
+      // Hide cursorPos
+      if (prevCursorPos < 6)
+        hidecursorPos(4*prevCursorPos-(prevCursorPos==0)+16, HEIGHT-4);
       else {
-        drawBlank(17,scoreY[prevCursorX-10]);
-        if (state.validScores[prevCursorX-10]==0) {
-          drawBlank(19,scoreY[prevCursorX-10]);
+        drawBlank(17,scoreY[prevCursorPos-10]);
+        if (state.validScores[prevCursorPos-10]==0) {
+          drawBlank(19,scoreY[prevCursorPos-10]);
         }
       }
 
-      // Draw cursor
-      if (cursorX < 6) {
-        drawCursor(4*cursorX-(cursorX==0)+16, HEIGHT-4);
+      // Draw cursorPos
+      if (cursorPos < 6) {
+        drawcursorPos(4*cursorPos-(cursorPos==0)+16, HEIGHT-4);
         soundCursor();
       } else {
-        drawScoreCursor(17,scoreY[cursorX-10]);
-        if (state.validScores[cursorX-10]==0) {
-          drawTextAlt(19,scoreY[cursorX-10],"0");
+        drawCursor(17,scoreY[cursorPos-10]);
+        if (state.validScores[cursorPos-10]==0) {
+          drawTextAlt(19,scoreY[cursorPos-10],"0");
         }
-        soundCursorScore();
+        soundScoreCursor();
       }
-      prevCursorX = cursorX;
+      prevCursorPos = cursorPos;
       
       
     }
 
     // Handle trigger press
-    if (inputTrigger) {
+    if (input.trigger) {
       
-      if (cursorX>=10) {
+      if (cursorPos>=10) {
         // Select score
-        i=cursorX-10;
+        i=cursorPos-10;
 
         // First, hide all scores but the main score
         for (j=0;j<15;j++) {
@@ -403,10 +402,10 @@ void waitOnPlayerMove() {
         state.playerMadeMove = true;
         soundScore();
         return;
-      } else if (cursorX>0) {
+      } else if (cursorPos>0) {
         // Toggle kept state of die
-        i = state.keepRoll[cursorX-1]= state.keepRoll[cursorX-1]=='1' ? '0' : '1';
-        drawDie(16+4*cursorX,HEIGHT-4,state.dice[cursorX-1]-48,i == '0');
+        i = state.keepRoll[cursorPos-1]= state.keepRoll[cursorPos-1]=='1' ? '0' : '1';
+        drawDie(16+4*cursorPos,HEIGHT-4,state.dice[cursorPos-1]-48,i == '0');
         if (i=='0')
           soundKeep();
         else 
@@ -422,7 +421,7 @@ void waitOnPlayerMove() {
         sendMove(tempBuffer);
 
         state.playerMadeMove = true;
-        hideCursor(4*prevCursorX-(prevCursorX==0)+16, HEIGHT-4);
+        hidecursorPos(4*prevCursorPos-(prevCursorPos==0)+16, HEIGHT-4);
 
         return;
       }
@@ -443,11 +442,11 @@ void waitOnPlayerMove() {
     } 
 
     // Pressed Esc
-    switch (inputKey) {
+    switch (input.key) {
       case KEY_ESCAPE:
       case KEY_ESCAPE_ALT:
         showInGameMenuScreen();
-        prevCursorX=(cursorX+1)%6;
+        prevCursorPos=(cursorPos+1)%6;
         return;
     }
 
@@ -456,49 +455,13 @@ void waitOnPlayerMove() {
   }
 }
 
-void checkIfSpectatorStatusChanged() {
-  // if (state.viewing == wasViewing)
-  //   return;
-  // wasViewing = state.viewing;
-
-  // if (state.viewing) {
-  //  // drawStatusText("game full: watching as spectator");
-    
-  //   pause(80);
-  // } else if (
-  //   state.players[0].status == 0 || 
-  //   (state.round == 1 && state.players[0].status == 1 && state.activePlayer != 0 )
-  //   ) {
-  //   /* Display intro text if player is joining the table on 
-  //    * the opening round or sitting down to wait for the next round.
-  //    * Otherwise, they are re-joining due to connection error, so we do not delay
-  //    */
-
-  //  // drawStatusText("YOU SIT DOWN AT THE TABLE");
-    
-  //   soundJoinGame();
-  //   pause(50);
-  // }
-}
-
-
-void clearGameState() {
-  // Reset some variables
-  wasViewing = 255;
-  waitCount = -1;
-  requestedMove=NULL;
-  forceRender();
-}
-
-
-// Invalidate state variables that will trigger re-rendering of screen items
-void forceRender() {
-  prevRound = 100;
-  prevPlayerCount = 0;
+// Invalidate state variables that will trigger re-rendering of screen items on the next cycle
+void clearRenderState() {
+  state.prevRound = 100;
+  state.prevPlayerCount = 0;
   state.prevActivePlayer = -1;
   forceReadyUpdates = true;
 }
-
 
 /// @brief Convenience function to draw text centered at row Y
 void centerText(unsigned char y, char * text) {
@@ -537,7 +500,7 @@ bool inputFieldCycle(uint8_t x, uint8_t y, uint8_t max, uint8_t* buffer) {
     lastY=y;
     curx = strlen(buffer);
     drawTextAlt(x,y, buffer);
-    drawTextCursor(x+curx,y);
+    drawTextcursorPos(x+curx,y);
     enableKeySounds();
   }
    // curx=i;
@@ -551,31 +514,31 @@ bool inputFieldCycle(uint8_t x, uint8_t y, uint8_t max, uint8_t* buffer) {
   if (kbhit()) {
     done=0;
     
-    inputKey = cgetc();
+    input.key = cgetc();
 
     // Debugging - See what key was pressed
-    // itoa(inputKey, tempBuffer, 10);drawText(0,0, tempBuffer);
+    // itoa(input.key, tempBuffer, 10);drawText(0,0, tempBuffer);
 
-    if (inputKey == KEY_RETURN && curx>1) {
+    if (input.key == KEY_RETURN && curx>1) {
       done=1;
-      // remove cursor
+      // remove cursorPos
       drawText(x+1+i,y," ");
-    } else if (inputKey == KEY_BACKSPACE && curx>0) {
+    } else if (input.key == KEY_BACKSPACE && curx>0) {
       buffer[--curx]=0;
       drawText(x+1+curx,y," ");
     } else if (
-      curx < max && ((curx>0 && inputKey == KEY_SPACEBAR) || (inputKey>= 48 && inputKey <=57) || (inputKey>= 65 && inputKey <=90) || (inputKey>= 97 && inputKey <=122))    // 0-9 A-Z a-z
+      curx < max && ((curx>0 && input.key == KEY_SPACEBAR) || (input.key>= 48 && input.key <=57) || (input.key>= 65 && input.key <=90) || (input.key>= 97 && input.key <=122))    // 0-9 A-Z a-z
     ) {
       
-      if (inputKey>=65 && inputKey<=90)
-        inputKey+=32;
+      if (input.key>=65 && input.key<=90)
+        input.key+=32;
 
-      buffer[curx]=inputKey;
+      buffer[curx]=input.key;
       buffer[++curx]=0;
     }
 
     drawTextAlt(x,y, buffer);
-    drawTextCursor(x+curx,y);
+    drawTextcursorPos(x+curx,y);
 
     if (done==1) 
       disableKeySounds();

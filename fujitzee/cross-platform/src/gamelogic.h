@@ -8,8 +8,7 @@ void processInput();
 void handleAnimation();
 
 
-void clearGameState();
-void forceRender();
+void clearRenderState();
 
 void centerText(unsigned char y, char * text);
 void centerTextAlt(unsigned char y, char * text);

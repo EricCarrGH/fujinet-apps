@@ -27,7 +27,7 @@ void soundPlayerJoin();
 void soundPlayerLeft();
 
 void soundCursor();
-void soundCursorScore();
+void soundScoreCursor();
 void soundKeep();
 void soundRelease();
 void soundScore();

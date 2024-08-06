@@ -19,6 +19,7 @@ char rx_buf[2048];     // buffer for payload
 static char url[160];
 static char hash[32] = ""; 
 static uint16_t rx_pos=0;
+char *requestedMove;
 
 void updateState(bool isTables) {
   static char *line, *nextLine, *end, *key, *value, *parent, *arrayPart;
@@ -29,7 +30,7 @@ void updateState(bool isTables) {
   //write_appkey(0x9999,  1, 1, "US");
   // Reset state and vars
   isKey=true; inArray=false;
-  playerCount=tableCount=0;
+  state.playerCount=state.tableCount=0;
   
   parent = NULL;
 
@@ -75,18 +76,18 @@ void updateState(bool isTables) {
       if (isTables) {
         switch (key[0]) {
           case 't': 
-            state.tables[tableCount].table = value;
+            state.tables[state.tableCount].table = value;
             break;
           case 'n': 
-            state.tables[tableCount].name = value; 
+            state.tables[state.tableCount].name = value; 
             break;
           case 'p': 
-            strcpy(state.tables[tableCount].players, value); 
+            strcpy(state.tables[state.tableCount].players, value); 
             break;
           case 'm': 
-            strcat(state.tables[tableCount].players, " / ");
-            strcat(state.tables[tableCount].players, value); 
-            tableCount++;
+            strcat(state.tables[state.tableCount].players, " / ");
+            strcat(state.tables[state.tableCount].players, value); 
+            state.tableCount++;
             break;
           default:
            break;
@@ -97,20 +98,20 @@ void updateState(bool isTables) {
             // Cap name at 8 chars max
             if (strlen(value)>8) 
               value[8]=0; 
-            state.players[playerCount].name=value;
+            state.players[state.playerCount].name=value;
             break;
           case 'a':
-            state.players[playerCount].alias = value;
+            state.players[state.playerCount].alias = value;
             break;
           case 's':
             arrayPart = strtok(value, ",");
             for(i = 0; arrayPart != NULL && i<16; i++) {
-                state.players[playerCount].scores[i] = atoi(arrayPart);
+                state.players[state.playerCount].scores[i] = atoi(arrayPart);
                 arrayPart = strtok(NULL, ",");
             }
 
             // Scores is the last property, so increase the player counter
-            playerCount++;
+            state.playerCount++;
             forceReadyUpdates=true;
             break;
           default:
@@ -123,7 +124,7 @@ void updateState(bool isTables) {
             break;
           case 'p':
             //if (strcmp(value, state.prompt)!=0)
-              promptChanged = true;
+              state.promptChanged = true;
             state.prompt = value;
             break;
           case 'r' :
@@ -162,7 +163,7 @@ void updateState(bool isTables) {
     isKey = !isKey;
     line=nextLine;
   }  
- // sprintf(tempBuffer, "%i", playerCount);
+ // sprintf(tempBuffer, "%i", state.playerCount);
  // write_appkey(0x9999,  0x44, 0x44, tempBuffer);
 
  
@@ -234,7 +235,9 @@ uint8_t apiCall(char *path, bool isAsync) {
 }
 
 void sendMove(char* move) {
-  skipApiCall=0;
+  if (move != NULL)
+    state.apiCallWait=0;
+
   requestedMove = move;
 }
 

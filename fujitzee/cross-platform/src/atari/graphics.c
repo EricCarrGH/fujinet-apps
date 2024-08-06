@@ -5,7 +5,6 @@
 */
 
 
-#include <conio.h>
 #include <peekpoke.h>
 #include <string.h>
 #include <stdlib.h>
@@ -185,11 +184,11 @@ void drawSpace(unsigned char x, unsigned char y, unsigned char w) {
   memset(xypos(x,y),0,w);
 }
 
-void drawTextCursor(unsigned char x, unsigned char y) {
+void drawTextcursorPos(unsigned char x, unsigned char y) {
   POKE(xypos(x,y),0xD9);
 }
 
-void drawScoreCursor(unsigned char x, unsigned char y) {
+void drawCursor(unsigned char x, unsigned char y) {
   POKE(xypos(x,y),0xBE);
 }
 
@@ -282,7 +281,7 @@ void drawBox(unsigned char x, unsigned char y, unsigned char w, unsigned char h)
   *(pos+w+1)=90;
 }
 
-void drawCursor(unsigned char x, unsigned char y) {
+void drawcursorPos(unsigned char x, unsigned char y) {
   static unsigned char i;
   static unsigned char* pos;
 
@@ -305,7 +304,7 @@ void drawCursor(unsigned char x, unsigned char y) {
   *(pos+4)=180;
 }
 
-void hideCursor(unsigned char x, unsigned char y) {
+void hidecursorPos(unsigned char x, unsigned char y) {
 static unsigned char i;
   static unsigned char* pos;
 

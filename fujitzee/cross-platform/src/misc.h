@@ -66,37 +66,46 @@ typedef struct {
   Player players[PLAYER_MAX];
   int16_t validScores[15];
 
+  // Table info
   Table tables[10];
+  uint8_t tableCount;
 
-  // Internal state
+  // Internal game state
+  uint8_t playerCount;
+  uint8_t rollFrames;
 
   uint8_t prevRollsLeft;
+  uint8_t prevPlayerCount;
+  uint8_t prevRound;
+
+  uint8_t apiCallWait;
+
   int8_t prevActivePlayer;
-
-  bool playerMadeMove;
-
-  uint8_t rollFrames;
-  uint8_t rollDiceCount;
-  uint8_t rollDiceIndex[5];
   
+  bool playerMadeMove;
+  bool promptChanged;
 } GameState;
 
+typedef struct {
+  unsigned char key;
+  bool trigger;
+  int8_t dirX;
+  int8_t dirY;
+} InputStruct;
 
-extern unsigned char playerCount, prevPlayerCount, prevRound, tableCount, cursorX, waitCount, inputKey, wasViewing, skipApiCall;
 
-extern signed char inputDirX, inputDirY;
-extern uint16_t prevPot, rx_len, maxJifs;
-extern bool noAnim, doAnim, inputTrigger, forceReadyUpdates, promptChanged;
+extern uint16_t rx_len, maxJifs;
+extern bool forceReadyUpdates;
 extern char tempBuffer[128];
 extern char query[50];
 extern char playerName[12];
 extern char serverEndpoint[50];
 
 extern GameState state;
+extern InputStruct input;
 
 // Common local scope temp variables
-extern unsigned char h, i, j, k, x, y, xx;
-extern char *hand, *requestedMove;
+extern unsigned char h, i, j, k, x, y;
 extern char prefs[4];
 
 void pause(unsigned char frames);

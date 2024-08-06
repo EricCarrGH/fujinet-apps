@@ -82,7 +82,7 @@ void soundCursor() {
    soundStop();
 }
 
-void soundCursorScore() {
+void soundScoreCursor() {
   _sound(0,90,10,5);
   pause(1);
   soundStop();
