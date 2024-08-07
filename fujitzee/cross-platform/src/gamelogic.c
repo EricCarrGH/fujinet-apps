@@ -27,6 +27,7 @@ void processStateChange() {
   renderBoardNamesMessages();
   handleAnimation();
 
+  state.prevPlayerCount=state.playerCount;
   state.prevActivePlayer = state.activePlayer;
   state.prevRollsLeft = state.rollsLeft;
   state.prevRound = state.round;
@@ -37,6 +38,7 @@ void renderBoardNamesMessages() {
   static bool redraw;
   static uint8_t scoreCursorX, scoreCursorY;
 
+  // Redraw the entire board on a new game
   redraw = state.round < state.prevRound;
   
   // Draw board if we haven't drawn it yet, or a new game
@@ -56,15 +58,21 @@ void renderBoardNamesMessages() {
         // Player name list
         drawTextAlt(1,i+1,state.players[i].alias);
         drawText(2,i+1,&state.players[i].name[1]);
+        drawSpace(1+strlen(state.players[i].name), i+1, 8-strlen(state.players[i].name));
 
         // Player initials across top of screen
         drawTextAlt(18+i*4,0,state.players[i].alias);
       } else if (i<state.prevPlayerCount) {
+        // Blank out entries for this player
         drawText(1,i+1,"        ");
+        drawBlank(18+i*4,0);
+        for(j=0;j<16;j++) 
+          drawSpace(17+i*4, scoreY[j], 3);
       }
     }
 
-    state.prevPlayerCount=state.playerCount;
+    //if the player cout changed, change the active player #, since a new player may have the same activePlayer number
+    state.prevActivePlayer = -1;
   }
 
   // Round 0 (waiting to start) checks, or going into round 1
@@ -95,8 +103,8 @@ void renderBoardNamesMessages() {
   if (state.round == 0)
     return;
     
-  // Indicate active player if changed
-  if (state.activePlayer != state.prevActivePlayer) {
+  // Scoreboard and prompt - refresh if the active player changed, or round changed
+  if (state.activePlayer != state.prevActivePlayer || state.round != state.prevRound) {
 
     if (state.round == 99)
       drawSpace(0,HEIGHT-5,200);
@@ -149,11 +157,14 @@ void renderBoardNamesMessages() {
 
     // Handle end of game
     if (state.round == 99) { 
+
+      // Clear active chips
+      drawTextVert(0,1,"      ");
       centerText(HEIGHT-3, state.prompt);
       soundGameDone();
 
       pause(state.moveTime*60);
-      centerTextAlt(HEIGHT-1,"press TRIGGER/SPACE to continue");
+      centerTextAlt(HEIGHT-1,"press TRIGGER/SPACE for new game");
       clearCommonInput();
       while (!input.trigger) {
         readCommonInput();
@@ -164,7 +175,7 @@ void renderBoardNamesMessages() {
     } else {
       pause(30);
       drawSpace(0,HEIGHT-5,200);
-      drawText(0,HEIGHT-3-(state.activePlayer==0), state.prompt);
+      drawText(0,HEIGHT-3, state.prompt);
       pause(30);
     }
 
@@ -268,9 +279,7 @@ void processInput() {
     if (!state.rollFrames && state.activePlayer == 0 && !state.playerMadeMove) {
       waitOnPlayerMove();
     }
-
   }
-
 
   switch(input.key) {
       case KEY_ESCAPE: // Esc
@@ -430,7 +439,7 @@ void waitOnPlayerMove() {
     // Tick counter once per second   
     if (++waitCount>5) {
       waitCount=0;
-      i = (maxJifs-getTime())/jifsPerSecond; //((maxJifs-getTime())/jifsPerSecond);
+      i = (maxJifs-getTime())/jifsPerSecond;
       if (i<=15 && i != state.moveTime) {
         state.moveTime = i;
         tempBuffer[0]=' ';
@@ -442,7 +451,7 @@ void waitOnPlayerMove() {
     } 
 
     // Pressed Esc
-    switch (input.key) {
+    switch (input.key) { 
       case KEY_ESCAPE:
       case KEY_ESCAPE_ALT:
         showInGameMenuScreen();

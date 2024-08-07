@@ -26,6 +26,7 @@ void drawTextcursorPos(unsigned char x, unsigned char y);
 void drawTextVert(unsigned char x, unsigned char y, char* s);
 bool isEmpty(unsigned char x, unsigned char y);
 
+void drawFujzee(unsigned char x, unsigned char y);
 void drawDie(unsigned char x, unsigned char y, unsigned char s, bool isSelected);
 void drawChip(unsigned char x, unsigned char y);
 void drawClock(unsigned char x, unsigned char y);

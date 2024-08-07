@@ -247,8 +247,12 @@ void drawBoard() {
   }
   
   // Fujitzee score!
-  memcpy(xypos(11,17),&"89:;<",5);
+  drawFujzee(11,17);
 
+}
+
+void drawFujzee(unsigned char x, unsigned char y) {
+  memcpy(xypos(x,y),&"89:;<",5); // Fujzee
 }
 
 void drawLine(unsigned char x, unsigned char y, unsigned char w) {

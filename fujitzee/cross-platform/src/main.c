@@ -43,8 +43,6 @@ GameState state;
 uint16_t rx_len, maxJifs;
 bool forceReadyUpdates;
 
-// 17880
-
 // Common local scope temp variables
 unsigned char h, i, j, k, x, y;
 char tempBuffer[128];
@@ -71,6 +69,10 @@ void main(void)
     
     // Poll the server every so often.
     if (!state.apiCallWait--) {
+
+      // Housekeeping - allows platform specific housekeeping, like stopping Attract/screensaver mode in Atari
+      housekeeping();
+
       // Poll the server
       switch (getStateFromServer()) {
         case STATE_UPDATE_ERROR:

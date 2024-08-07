@@ -10,6 +10,6 @@
 void resetTimer();
 int getTime();
 void quit();
-
+void housekeeping();
 
 #endif /* UTIL_H */

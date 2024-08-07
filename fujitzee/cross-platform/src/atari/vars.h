@@ -14,20 +14,20 @@
  */
 
 #define KEY_LEFT_ARROW      CH_CURS_LEFT
-#define KEY_LEFT_ARROW_2    1
-#define KEY_LEFT_ARROW_3    2 // ,
+#define KEY_LEFT_ARROW_2    43 // +
+#define KEY_LEFT_ARROW_3    60 // <
 
 #define KEY_RIGHT_ARROW     CH_CURS_RIGHT
-#define KEY_RIGHT_ARROW_2   3
-#define KEY_RIGHT_ARROW_3   4 // .
+#define KEY_RIGHT_ARROW_2   42 // *
+#define KEY_RIGHT_ARROW_3   62 // >
 
 #define KEY_UP_ARROW        CH_CURS_UP
-#define KEY_UP_ARROW_2      5
-#define KEY_UP_ARROW_3      6 // -
+#define KEY_UP_ARROW_2      45 // -
+#define KEY_UP_ARROW_3      2 // DUMMY
 
 #define KEY_DOWN_ARROW      CH_CURS_DOWN
-#define KEY_DOWN_ARROW_2    7
-#define KEY_DOWN_ARROW_3    8 // =
+#define KEY_DOWN_ARROW_2    61 // =
+#define KEY_DOWN_ARROW_3    3 // DUMMY
 
 //#define KEY_RETURN       0x0D
 #define KEY_ESCAPE       CH_ESC

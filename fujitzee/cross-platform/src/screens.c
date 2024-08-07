@@ -44,25 +44,54 @@ void showHelpScreen() {
   y++;drawText(5,y, "dice over 13 rounds to fill out");
   y++;drawText(5,y, "their score sheet.");
 
+  y+=3;
+  centerTextAlt(y, "winning");
+
   y+=2;drawText(5,y, "the player with the highest");
   y++;drawText(5,y, "score wins the game!");
 
   y+=3;
   centerTextAlt(y, "turn details");
 
-  y+=2;drawText(5,y, "1. re-roll dice up to 2 times");
-  y++;drawText(5,y, "2. choose a row to score");
+  y+=2;drawTextAlt(5,y, "1. SELECT ANY DICE TO KEEP");
+  y++;drawTextAlt(5,y, "2. roll TO GET NEW DICE");
+  y++;drawTextAlt(5,y, "3. REPEAT UP TO TWO TIMES MORE");
+  y++;drawTextAlt(5,y, "4. CHOOSE YOUR score");
 
-  y+=3;
-  centerTextAlt(y, "upper bonus");
-
-  y+=2;drawText(5,y, "if upper total is 63 or higher,");
-  y++;drawText(5,y, "you score a bonus 35 points.");
-
-  centerStatusText("press any key to continue");
+  centerStatusText("PRESS ANY KEY FOR score INFO");
 
   clearCommonInput();
   cgetc();
+
+  resetScreenWithBorder();
+
+  drawTextAlt(11,1,"scoring your rolls");
+  drawLine(11,2,18);
+  
+  y=4;centerTextAlt(y, "upper scores");
+  y+=2;drawText(5,y, "total all dice that match the");
+  y++;drawText(5,y, "number");
+
+  y+=2;centerTextAlt(y, "upper bonus");
+  y+=2;drawTextAlt(5,y, "IF UPPER TOTAL IS 63 OR HIGHER");
+  y++;drawTextAlt(5,y, "YOU SCORE A bonus 35 POINTS");
+
+  y+=3;centerTextAlt(y, "bottom scores");
+  y+=2;drawTextAlt(4,y, "set   - x OF A KIND - ADD ALL DICE");
+  y+=1;drawTextAlt(4,y, "house - FULL HOUSE - SET OF 2 AND 3");
+  y+=1;drawTextAlt(4,y, "run   - RUN OF x - EXAMPLE 12345");
+  y+=1;drawTextAlt(4,y, "count - SCORE TOTAL OF ALL DICE");
+  y+=1;drawTextAlt(4,y, "      - 5 OF A KIND");
+  drawFujzee(4,y);
+
+  y+=3;
+    y+=3;
+  
+  centerStatusText("press any key to close");
+
+  clearCommonInput();
+  cgetc();
+
   resetScreen();
   
 }
@@ -214,7 +243,8 @@ void showTableSelectionScreen() {
       }
 
       //drawStatusText("r>efresh   h+elp  c:olor   n+ame   q+uit");
-      centerStatusText("Refresh Help Color Name Quit");
+      //centerStatusText("Refresh Help Color Name Quit");
+      centerStatusText("Refresh  Help  Name  Quit");
       
       shownChip=0;
 
