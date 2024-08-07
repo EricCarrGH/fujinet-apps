@@ -118,10 +118,18 @@ void showPlayerNameScreen() {
 /// @brief Action called in Welcome Screen to verify player has a name
 void welcomeActionVerifyPlayerName() {
   // Read player's name from app key
-  read_appkey(AK_LOBBY_CREATOR_ID,  AK_LOBBY_APP_ID, AK_LOBBY_KEY_USERNAME, tempBuffer);
-
+  read_appkey(AK_LOBBY_CREATOR_ID,  AK_LOBBY_APP_ID, AK_LOBBY_KEY_USERNAME, tempBuffer);  
   tempBuffer[12]=0;
   strcpy(playerName,tempBuffer);
+
+
+  // Convert to lowercase
+  for(i=0;i<strlen(playerName);i++) {
+    if (playerName[i] >=65 && playerName[i]<=90)
+      playerName[i]+=32;
+  }
+  
+
 
   // Capture username if player didn't come in from the lobby
   if (strlen(playerName) == 0)
@@ -133,6 +141,7 @@ void showWelcomeScreen() {
   resetScreenWithBorder();
   drawLogo();
   
+  loadPrefs();
   welcomeActionVerifyPlayerName();
   welcomeActionVerifyServerDetails();
 

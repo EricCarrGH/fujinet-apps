@@ -5,6 +5,8 @@
 #include<stdint.h>
 #include<atari.h>
 #include<string.h>
+#include "../misc.h"
+#include"../fujinet-fuji.h"
 
 void resetGraphics();
 
@@ -21,7 +23,9 @@ int getTime() {
 
 void quit() {
   // Possible to revert screen to boot normals
-  resetGraphics();
+  //
+  //
+  fuji_set_boot_config(1);
   exit(0);
 }
 

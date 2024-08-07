@@ -30,8 +30,8 @@ typedef unsigned char bool;
 #include "fujinet-fuji.h"
 
 // Store default server endpoint in case lobby did not set app key
-char serverEndpoint[50] = "N:https://fujitzee.carr-designs.com/";
-//char serverEndpoint[50] = "N:http://127.0.0.1:8080/";
+char serverEndpoint[50] = "https://fujitzee.carr-designs.com/";
+//char serverEndpoint[50] = "http://127.0.0.1:8080/";
 //char serverEndpoint[64] = "N:http://api.open-notify.org/iss-now.json";
 
 char query[50] = ""; //?table=blue&player=ERICAPL2";
@@ -60,8 +60,7 @@ void main(void)
   
   initGraphics(); 
   initSound();
-  loadPrefs();
-
+  
   showWelcomeScreen();
   showTableSelectionScreen();
   

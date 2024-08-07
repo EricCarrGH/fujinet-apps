@@ -15,9 +15,9 @@
 
 extern unsigned char charset[];
 
-#define SCREEN_LOC 0xA000
-#define CHARSET_LOC 0xA800
-#define DISPLAY_LIST 0xB000
+#define SCREEN_LOC 0x9000
+#define CHARSET_LOC 0x9800
+#define DISPLAY_LIST 0x9420
 
 #define xypos(x,y) (SCREEN_LOC + x + (y)*WIDTH)
 
@@ -92,6 +92,7 @@ void initGraphics() {
 
   // Set Display list
   memcpy(DISPLAY_LIST,&DisplayList,sizeof(DisplayList));
+  waitvsync();
   OS.sdlst = DISPLAY_LIST;
 
   // Load custom charset

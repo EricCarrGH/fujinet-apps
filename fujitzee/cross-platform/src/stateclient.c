@@ -189,7 +189,8 @@ uint8_t apiCall(char *path, bool isAsync) {
       network_close(url);
 
     // Setup the url
-    strcpy(url, serverEndpoint);
+    strcpy(url, "N:");
+    strcat(url, serverEndpoint);
     strcat(url, path);
     strcat(url, query);
     strcat(url, strlen(query)==0 ? "?" : "&");
